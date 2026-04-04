@@ -2,19 +2,19 @@ import { Link } from 'react-router-dom';
 
 const HomePage = () => {
   return (
-    <div className="page-stack">
-      <section className="hero-welcome">
-        <div className="hero-welcome__content">
-          <p className="hero-welcome__eyebrow">SKY VISION STORE</p>
-          <h1>Добро пожаловать в магазин игровых ключей</h1>
-          <p className="hero-welcome__text">
-            Sky Vision Store — это современный интернет-магазин цифровых ключей для
-            Steam, Epic Games, PlayStation, Xbox, Battle.net, Origin, Uplay и других
-            платформ. Здесь пользователь может быстро найти нужную игру, посмотреть
-            скидки, добавить товар в корзину и оформить заказ в удобном интерфейсе.
+    <div className="home-clean">
+      <section className="home-clean__hero">
+
+        <div className="home-clean__brand">Sky Vision Store</div>
+
+        <div className="home-clean__center">
+          <h1>Переосмысли покупку игровых ключей</h1>
+          <p className="home-clean__subtitle">
+            Удобный магазин цифровых ключей с каталогом игр, скидками, избранным,
+            корзиной и персональными разделами.
           </p>
 
-          <div className="hero-welcome__actions">
+          <div className="home-clean__actions">
             <Link to="/catalog" className="primary-btn">
               Перейти в каталог
             </Link>
@@ -23,38 +23,43 @@ const HomePage = () => {
             </Link>
           </div>
         </div>
+
+        <div className="home-clean__scene">
+          <div className="home-clean__scene-left" />
+          <div className="home-clean__scene-right" />
+        </div>
       </section>
 
-      <section className="welcome-grid">
-        <div className="card welcome-card">
-          <h2>Что есть в магазине</h2>
-          <ul className="welcome-list">
-            <li>Ключи для Steam, Epic Games, Xbox, PlayStation и других платформ</li>
-            <li>Удобный каталог с поиском, фильтрацией и сортировкой</li>
-            <li>Страница товара с описанием, регионом и системными требованиями</li>
-            <li>Корзина, оформление заказа и личный кабинет</li>
-          </ul>
+      <section className="home-clean__content">
+        <div className="home-clean__text-block">
+          <h2>О магазине</h2>
+          <p>
+            Sky Vision Store — это современный интернет-магазин цифровых игровых
+            ключей. Сайт создан для быстрого поиска игр, удобной навигации по
+            основным разделам и комфортного выбора товаров для разных игровых
+            платформ.
+          </p>
         </div>
 
-        <div className="card welcome-card">
-          <h2>Преимущества интерфейса</h2>
-          <ul className="welcome-list">
-            <li>Понятная навигация между страницами</li>
-            <li>Современный адаптивный дизайн</li>
-            <li>Раздел со скидками и акциями</li>
-            <li>Избранное и быстрый переход к покупкам</li>
-          </ul>
+        <div className="home-clean__text-block">
+          <h2>Что доступно пользователю</h2>
+          <p>
+            Пользователь может просматривать каталог, искать игры по названию,
+            фильтровать товары по платформе и жанру, открывать страницы игр,
+            добавлять товары в корзину и в избранное, а также работать с
+            купонами и персональными разделами.
+          </p>
         </div>
 
-        <div className="card welcome-card">
-          <h2>Почему стоит выбрать Sky Vision Store</h2>
-          <ul className="welcome-list">
-            <li>Современный и удобный интерфейс для быстрого поиска игр</li>
-            <li>Раздел с акциями и выгодными предложениями</li>
-            <li>Поддержка избранного, корзины и оформления заказа</li>
-            <li>Отдельные страницы товара с полной информацией</li>
-            <li>Адаптивный дизайн для компьютера, планшета и телефона</li>
-          </ul>
+        <div className="home-clean__text-block">
+          <h2>О гарантии</h2>
+          <p>
+            Мы гарантируем, что каждый цифровой ключ соответствует выбранному
+            товару и будет доставлен пользователю. Sky Vision Store ручается за
+            корректность представленной информации о товаре и за то, что
+            приобретённый ключ предназначен именно для указанной платформы и
+            региона активации.
+          </p>
         </div>
       </section>
     </div>
