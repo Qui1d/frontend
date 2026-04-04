@@ -30,23 +30,23 @@ const Footer = () => {
 
         <div className="footer__features">
           <div className="footer__feature">
-            <span className="footer__feature-icon">💸</span>
+            <span className="footer__feature-icon"></span>
             <span>Выгодные цены</span>
           </div>
           <div className="footer__feature">
-            <span className="footer__feature-icon">🛡️</span>
+            <span className="footer__feature-icon"></span>
             <span>Гарантия качества</span>
           </div>
           <div className="footer__feature">
-            <span className="footer__feature-icon">⚡</span>
+            <span className="footer__feature-icon"></span>
             <span>Быстрая выдача ключей</span>
           </div>
           <div className="footer__feature">
-            <span className="footer__feature-icon">🎧</span>
+            <span className="footer__feature-icon"></span>
             <span>Поддержка покупателей</span>
           </div>
           <div className="footer__feature">
-            <span className="footer__feature-icon">🎁</span>
+            <span className="footer__feature-icon"></span>
             <span>Скидки и бонусы</span>
           </div>
         </div>

@@ -18,7 +18,7 @@ const Header = () => {
 
         <nav className="header__actions">
           <button className="theme-toggle" onClick={toggleTheme} type="button">
-            {theme === 'light' ? '🌙 Тёмная' : '☀️ Светлая'}
+            {theme === 'light' ? 'Тёмная' : 'Светлая'}
           </button>
 
           <Link to="/profile">Личный кабинет</Link>
