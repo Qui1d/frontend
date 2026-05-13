@@ -1,32 +1,62 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { products } from '../data/products';
+
+import { getProducts } from '../api/productApi';
 import { formatPrice } from '../utils/formatPrice';
+import type { Product } from '../types/product';
 
 const SearchBar = () => {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
   const navigate = useNavigate();
+
   const blurTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setIsLoading(true);
+
+        const loadedProducts = await getProducts();
+
+        setProducts(loadedProducts);
+      } catch {
+        setProducts([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
 
   const filteredProducts = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
 
-    if (!trimmed) return [];
+    if (!trimmed) {
+      return [];
+    }
 
     return products
       .filter((product) => product.title.toLowerCase().includes(trimmed))
       .slice(0, 6);
-  }, [query]);
+  }, [products, query]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
 
     const trimmed = query.trim();
-    if (!trimmed) return;
+
+    if (!trimmed) {
+      return;
+    }
 
     navigate(`/catalog?search=${encodeURIComponent(trimmed)}`);
+
     setIsFocused(false);
   };
 
@@ -34,6 +64,7 @@ const SearchBar = () => {
     if (blurTimeoutRef.current) {
       window.clearTimeout(blurTimeoutRef.current);
     }
+
     setIsFocused(true);
   };
 
@@ -56,12 +87,15 @@ const SearchBar = () => {
           onFocus={handleFocus}
           onBlur={handleBlur}
         />
+
         <button type="submit">Поиск</button>
       </form>
 
       {showDropdown && (
         <div className="search-dropdown">
-          {filteredProducts.length > 0 ? (
+          {isLoading ? (
+            <div className="search-dropdown__empty">Загрузка...</div>
+          ) : filteredProducts.length > 0 ? (
             <>
               <div className="search-dropdown__title">Результаты поиска</div>
 
