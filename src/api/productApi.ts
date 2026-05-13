@@ -56,7 +56,7 @@ function mapProductFromApi(product: ProductFromApi): Product {
     region: product.region,
     description: product.description,
     requirements: product.requirements
-      ? product.requirements.split('\n').filter(Boolean)
+      ? product.requirements.split(/\r?\n/).filter(Boolean)
       : [],
     isNew: product.isNew,
     isPopular: product.isPopular,
@@ -72,6 +72,14 @@ export async function getProducts(): Promise<Product[]> {
 
 export async function getProductById(id: number): Promise<Product> {
   const product = await apiRequest<ProductFromApi>(`/Product/${id}`);
+
+  return mapProductFromApi(product);
+}
+
+export async function getProductBySlug(slug: string): Promise<Product> {
+  const product = await apiRequest<ProductFromApi>(
+    `/Product/slug/${encodeURIComponent(slug)}`
+  );
 
   return mapProductFromApi(product);
 }
