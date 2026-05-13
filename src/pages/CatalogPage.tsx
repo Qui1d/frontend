@@ -1,32 +1,70 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+
 import FilterPanel from '../components/FilterPanel';
 import SidebarCategories from '../components/SidebarCategories';
 import SortBar from '../components/SortBar';
 import ProductGrid from '../components/ProductGrid';
 import RecommendedShowcase from '../components/RecommendedShowcase';
-import { products } from '../data/products';
+
+import { getProducts } from '../api/productApi';
 import { filterProducts } from '../utils/filterProducts';
+import type { Product } from '../types/product';
 
 const ITEMS_PER_PAGE = 8;
 
 const CatalogPage = () => {
   const [searchParams] = useSearchParams();
+
+  const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [platform, setPlatform] = useState('all');
   const [genre, setGenre] = useState('all');
   const [sort, setSort] = useState('default');
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const searchFromUrl = searchParams.get('search') || '';
+    setSearch(searchFromUrl);
+    setCurrentPage(1);
+  }, [searchParams]);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setLoading(true);
+        setError('');
+
+        const loadedProducts = await getProducts();
+
+        setProducts(loadedProducts);
+      } catch (error) {
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError('Не удалось загрузить товары');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
   const filteredProducts = useMemo(() => {
     return filterProducts(products, { search, platform, genre, sort });
-  }, [search, platform, genre, sort]);
+  }, [products, search, platform, genre, sort]);
 
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
 
   const paginatedProducts = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
+
     return filteredProducts.slice(startIndex, endIndex);
   }, [filteredProducts, currentPage]);
 
@@ -77,43 +115,59 @@ const CatalogPage = () => {
 
           <SortBar sort={sort} onSortChange={handleSortChange} />
 
-          <ProductGrid products={paginatedProducts} />
-
-          {totalPages > 1 && (
-            <div className="catalog-pagination">
-              <button
-                type="button"
-                className="catalog-pagination__btn"
-                onClick={() => setCurrentPage((prev) => prev - 1)}
-                disabled={currentPage === 1}
-              >
-                Назад
-              </button>
-
-              <div className="catalog-pagination__pages">
-                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
-                  <button
-                    key={page}
-                    type="button"
-                    className={`catalog-pagination__page ${
-                      currentPage === page ? 'catalog-pagination__page--active' : ''
-                    }`}
-                    onClick={() => setCurrentPage(page)}
-                  >
-                    {page}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                className="catalog-pagination__btn"
-                onClick={() => setCurrentPage((prev) => prev + 1)}
-                disabled={currentPage === totalPages}
-              >
-                Вперед
-              </button>
+          {loading && (
+            <div className="empty-state">
+              Загрузка товаров...
             </div>
+          )}
+
+          {!loading && error && (
+            <div className="empty-state">
+              {error}
+            </div>
+          )}
+
+          {!loading && !error && (
+            <>
+              <ProductGrid products={paginatedProducts} />
+
+              {totalPages > 1 && (
+                <div className="catalog-pagination">
+                  <button
+                    type="button"
+                    className="catalog-pagination__btn"
+                    onClick={() => setCurrentPage((prev) => prev - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    Назад
+                  </button>
+
+                  <div className="catalog-pagination__pages">
+                    {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                      <button
+                        key={page}
+                        type="button"
+                        className={`catalog-pagination__page ${
+                          currentPage === page ? 'catalog-pagination__page--active' : ''
+                        }`}
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="catalog-pagination__btn"
+                    onClick={() => setCurrentPage((prev) => prev + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Вперед
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </section>
       </div>
