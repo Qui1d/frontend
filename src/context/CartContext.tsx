@@ -1,14 +1,12 @@
 import { createContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-
 import {
   addCartItem,
   clearUserCart,
-  getCartByUserId,
+  getCart,
   removeCartItem,
   updateCartItem,
 } from '../api/cartApi';
-
 import { useAuth } from '../hooks/useAuth';
 import type { Product } from '../types/product';
 import type { CartItemType } from '../types/cart';
@@ -28,7 +26,7 @@ export const CartContext = createContext<CartContextType | null>(null);
 const CART_KEY = 'game-key-store-cart';
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const [cartItems, setCartItems] = useState<CartItemType[]>(() => {
     const saved = localStorage.getItem(CART_KEY);
@@ -47,7 +45,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const loadCart = async () => {
-      if (!isAuthenticated || !user) {
+      if (!isAuthenticated) {
         const saved = localStorage.getItem(CART_KEY);
 
         if (!saved) {
@@ -66,7 +64,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
 
       try {
-        const loadedCart = await getCartByUserId(user.id);
+        const loadedCart = await getCart();
         setCartItems(loadedCart);
       } catch {
         setCartItems([]);
@@ -74,7 +72,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     };
 
     loadCart();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -83,7 +81,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [cartItems, isAuthenticated]);
 
   const addToCart = async (product: Product) => {
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated) {
       setCartItems((prev) => {
         const existing = prev.find((item) => item.product.id === product.id);
 
@@ -102,7 +100,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const updatedItem = await addCartItem({
-      userId: user.id,
       productId: product.id,
       quantity: 1,
     });
@@ -121,7 +118,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeFromCart = async (productId: number) => {
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated) {
       setCartItems((prev) =>
         prev.filter((item) => item.product.id !== productId)
       );
@@ -129,7 +126,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    await removeCartItem(user.id, productId);
+    await removeCartItem(productId);
 
     setCartItems((prev) =>
       prev.filter((item) => item.product.id !== productId)
@@ -141,7 +138,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated) {
       setCartItems((prev) =>
         prev.map((item) =>
           item.product.id === productId ? { ...item, quantity } : item
@@ -151,7 +148,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const updatedItem = await updateCartItem(user.id, productId, quantity);
+    const updatedItem = await updateCartItem(productId, quantity);
 
     setCartItems((prev) =>
       prev.map((item) =>
@@ -161,15 +158,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const clearCart = async () => {
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated) {
       setCartItems([]);
       return;
     }
 
     try {
-      await clearUserCart(user.id);
+      await clearUserCart();
     } catch {
-      // Если корзина уже пустая, просто очищаем состояние на frontend.
+      // If the cart is already empty, only clear frontend state.
     }
 
     setCartItems([]);
@@ -186,7 +183,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);
   }, [cartItems]);
 
-  const value = useMemo<CartContextType>(() => {
+  const value = useMemo(() => {
     return {
       cartItems,
       addToCart,
@@ -196,11 +193,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       totalPrice,
       totalCount,
     };
-  }, [cartItems, totalPrice, totalCount, isAuthenticated, user]);
+  }, [cartItems, totalPrice, totalCount, isAuthenticated]);
 
-  return (
-    <CartContext.Provider value={value}>
-      {children}
-    </CartContext.Provider>
-  );
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };

@@ -30,7 +30,6 @@ interface CartItemFromApi {
 }
 
 export interface AddCartItemRequest {
-  userId: number;
   productId: number;
   quantity: number;
 }
@@ -65,13 +64,15 @@ function mapCartItemFromApi(item: CartItemFromApi): CartItemType {
   };
 }
 
-export async function getCartByUserId(userId: number): Promise<CartItemType[]> {
-  const cartItems = await apiRequest<CartItemFromApi[]>(`/Cart/${userId}`);
+export async function getCart(): Promise<CartItemType[]> {
+  const cartItems = await apiRequest<CartItemFromApi[]>('/Cart');
 
   return cartItems.map(mapCartItemFromApi);
 }
 
-export async function addCartItem(data: AddCartItemRequest): Promise<CartItemType> {
+export async function addCartItem(
+  data: AddCartItemRequest
+): Promise<CartItemType> {
   const cartItem = await apiRequest<CartItemFromApi>('/Cart/add', {
     method: 'POST',
     body: data,
@@ -81,12 +82,11 @@ export async function addCartItem(data: AddCartItemRequest): Promise<CartItemTyp
 }
 
 export async function updateCartItem(
-  userId: number,
   productId: number,
   quantity: number
 ): Promise<CartItemType> {
   const cartItem = await apiRequest<CartItemFromApi>(
-    `/Cart/${userId}/${productId}?quantity=${quantity}`,
+    `/Cart/${productId}?quantity=${quantity}`,
     {
       method: 'PUT',
     }
@@ -95,17 +95,14 @@ export async function updateCartItem(
   return mapCartItemFromApi(cartItem);
 }
 
-export async function removeCartItem(
-  userId: number,
-  productId: number
-): Promise<void> {
-  await apiRequest<void>(`/Cart/${userId}/${productId}`, {
+export async function removeCartItem(productId: number): Promise<void> {
+  await apiRequest<void>(`/Cart/${productId}`, {
     method: 'DELETE',
   });
 }
 
-export async function clearUserCart(userId: number): Promise<void> {
-  await apiRequest<void>(`/Cart/clear/${userId}`, {
+export async function clearUserCart(): Promise<void> {
+  await apiRequest<void>('/Cart/clear', {
     method: 'DELETE',
   });
 }
