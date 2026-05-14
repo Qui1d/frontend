@@ -18,6 +18,16 @@ interface AuthUserFromApi {
   createdAt?: string;
 }
 
+interface AuthResponseFromApi {
+  token: string;
+  user: AuthUserFromApi;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: AuthUser;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -39,20 +49,27 @@ function mapUserFromApi(user: AuthUserFromApi): AuthUser {
   };
 }
 
-export async function loginUser(data: LoginRequest): Promise<AuthUser> {
-  const user = await apiRequest<AuthUserFromApi>('/Auth/login', {
-    method: 'POST',
-    body: data,
-  });
-
-  return mapUserFromApi(user);
+function mapAuthResponseFromApi(response: AuthResponseFromApi): AuthResponse {
+  return {
+    token: response.token,
+    user: mapUserFromApi(response.user),
+  };
 }
 
-export async function registerUser(data: RegisterRequest): Promise<AuthUser> {
-  const user = await apiRequest<AuthUserFromApi>('/Auth/register', {
+export async function loginUser(data: LoginRequest): Promise<AuthResponse> {
+  const response = await apiRequest<AuthResponseFromApi>('/Auth/login', {
     method: 'POST',
     body: data,
   });
 
-  return mapUserFromApi(user);
+  return mapAuthResponseFromApi(response);
+}
+
+export async function registerUser(data: RegisterRequest): Promise<AuthResponse> {
+  const response = await apiRequest<AuthResponseFromApi>('/Auth/register', {
+    method: 'POST',
+    body: data,
+  });
+
+  return mapAuthResponseFromApi(response);
 }
