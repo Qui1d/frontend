@@ -1,31 +1,68 @@
 import { Link } from 'react-router-dom';
+
 import SearchBar from './SearchBar';
+
+import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import { useTheme } from '../hooks/useTheme';
 
 const Header = () => {
   const { totalCount } = useCart();
   const { theme, toggleTheme } = useTheme();
+  const { user, isAuthenticated, logout } = useAuth();
 
   return (
     <header className="header">
-      <div className="container header__inner">
+      <div className="header__inner">
         <Link to="/" className="logo">
           Sky Vision Store
         </Link>
 
-        <SearchBar />
+        <div className="header__search">
+          <SearchBar />
+        </div>
 
-        <nav className="header__actions">
-          <button className="theme-toggle" onClick={toggleTheme} type="button">
+        <div className="header-actions">
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={toggleTheme}
+          >
             {theme === 'light' ? 'Тёмная' : 'Светлая'}
           </button>
 
-          <Link to="/profile">Личный кабинет</Link>
-          <Link to="/purchases">Мои покупки</Link>
-          <Link to="/favorites">Избранное</Link>
-          <Link to="/cart">Корзина ({totalCount})</Link>
-        </nav>
+          {isAuthenticated ? (
+            <Link to="/profile" className="header-link">
+              {user?.username || 'Личный кабинет'}
+            </Link>
+          ) : (
+            <Link to="/auth" className="header-link">
+              Войти
+            </Link>
+          )}
+
+          <Link to="/purchases" className="header-link">
+            Мои покупки
+          </Link>
+
+          <Link to="/favorites" className="header-link">
+            Избранное
+          </Link>
+
+          <Link to="/cart" className="header-link">
+            Корзина ({totalCount})
+          </Link>
+
+          {isAuthenticated && (
+            <button
+              type="button"
+              className="header-link header-link--button"
+              onClick={logout}
+            >
+              Выйти
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );
