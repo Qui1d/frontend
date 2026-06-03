@@ -4,8 +4,13 @@ import {
   createProduct,
   deleteProduct,
   getProducts,
+  updateProduct,
 } from '../api/productApi';
-import type { ProductCreateRequest } from '../api/productApi';
+
+import type {
+  ProductCreateRequest,
+  ProductUpdateRequest,
+} from '../api/productApi';
 import type { Product } from '../types/product';
 import { formatPrice } from '../utils/formatPrice';
 import '../styles/adminProducts.css';
@@ -35,6 +40,7 @@ const AdminProductsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [error, setError] = useState('');
 
   const totalProducts = products.length;
@@ -65,6 +71,12 @@ const AdminProductsPage = () => {
   useEffect(() => {
     loadProducts();
   }, []);
+
+  const resetForm = () => {
+    setForm(emptyProductForm);
+    setEditingProductId(null);
+    setIsFormOpen(false);
+  };
 
   const handleChange = (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -102,7 +114,38 @@ const AdminProductsPage = () => {
     }));
   };
 
-  const handleCreateProduct = async (event: FormEvent<HTMLFormElement>) => {
+  const handleEditProduct = (product: Product) => {
+    setEditingProductId(product.id);
+
+    setForm({
+      title: product.title,
+      slug: product.slug,
+      platform: product.platform,
+      genre: product.genre,
+      price: String(product.price),
+      oldPrice:
+        product.oldPrice !== undefined && product.oldPrice !== null
+          ? String(product.oldPrice)
+          : '',
+      discount:
+        product.discount !== undefined && product.discount !== null
+          ? String(product.discount)
+          : '',
+      image: product.image,
+      recommendedImage: product.recommendedImage ?? '',
+      region: product.region,
+      description: product.description,
+      requirements: product.requirements.join('\n'),
+      isNew: Boolean(product.isNew),
+      isPopular: Boolean(product.isPopular),
+      isUpcoming: Boolean(product.isUpcoming),
+    });
+
+    setIsFormOpen(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSubmitProduct = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!form.title.trim()) {
@@ -166,11 +209,26 @@ const AdminProductsPage = () => {
     try {
       setIsSaving(true);
 
-      const createdProduct = await createProduct(productToCreate);
+      if (editingProductId) {
+        const updatedProduct = await updateProduct(
+          editingProductId,
+          productToCreate as ProductUpdateRequest
+        );
 
-      setProducts((prev) => [...prev, createdProduct]);
-      setForm(emptyProductForm);
-      setIsFormOpen(false);
+        setProducts((prev) =>
+          prev.map((product) =>
+            product.id === editingProductId ? updatedProduct : product
+          )
+        );
+      } else {
+        const createdProduct = await createProduct(
+          productToCreate as ProductCreateRequest
+        );
+
+        setProducts((prev) => [...prev, createdProduct]);
+      }
+
+      resetForm();
     } catch (error) {
       if (error instanceof Error) {
         alert(error.message);
@@ -258,10 +316,14 @@ const AdminProductsPage = () => {
         </div>
 
         {isFormOpen && (
-          <form className="admin-products-form" onSubmit={handleCreateProduct}>
+          <form className="admin-products-form" onSubmit={handleSubmitProduct}>
             <div className="admin-products-form__title">
-              <h3>Новый товар</h3>
-              <p>Заполни данные игры, чтобы добавить её в каталог.</p>
+              <h3>{editingProductId ? 'Редактирование товара' : 'Новый товар'}</h3>
+              <p>
+                {editingProductId
+                  ? 'Измени данные игры и сохрани обновлённую информацию.'
+                  : 'Заполни данные игры, чтобы добавить её в каталог.'}
+              </p>
             </div>
 
             <div className="admin-products-form__grid">
@@ -453,15 +515,16 @@ const AdminProductsPage = () => {
                 disabled={isSaving}
                 type="submit"
               >
-                {isSaving ? 'Сохранение...' : 'Сохранить товар'}
+                {isSaving
+                  ? 'Сохранение...'
+                  : editingProductId
+                    ? 'Сохранить изменения'
+                    : 'Сохранить товар'}
               </button>
 
               <button
                 className="button button--secondary"
-                onClick={() => {
-                  setForm(emptyProductForm);
-                  setIsFormOpen(false);
-                }}
+                onClick={resetForm}
                 type="button"
               >
                 Отмена
@@ -552,6 +615,7 @@ const AdminProductsPage = () => {
                       <div className="admin-products-actions">
                         <button
                           className="button button--small button--secondary"
+                          onClick={() => handleEditProduct(product)}
                           type="button"
                         >
                           Изменить
