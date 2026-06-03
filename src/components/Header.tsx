@@ -9,7 +9,7 @@ import { useTheme } from '../hooks/useTheme';
 const Header = () => {
   const { totalCount } = useCart();
   const { theme, toggleTheme } = useTheme();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
 
   return (
     <header className="header">
@@ -22,7 +22,7 @@ const Header = () => {
           <SearchBar />
         </div>
 
-        <div className="header-actions">
+        <nav className="header__actions">
           <button
             type="button"
             className="theme-toggle"
@@ -31,8 +31,14 @@ const Header = () => {
             {theme === 'light' ? 'Тёмная' : 'Светлая'}
           </button>
 
+          {isAuthenticated && isAdmin && (
+            <Link to="/admin" className="header-link header-link--admin">
+              Админ-панель
+            </Link>
+          )}
+
           {isAuthenticated ? (
-            <Link to="/profile" className="header-link">
+            <Link to="/profile" className="header-link header-link--profile">
               {user?.username || 'Личный кабинет'}
             </Link>
           ) : (
@@ -49,20 +55,20 @@ const Header = () => {
             Избранное
           </Link>
 
-          <Link to="/cart" className="header-link">
+          <Link to="/cart" className="header-link header-link--cart">
             Корзина ({totalCount})
           </Link>
 
           {isAuthenticated && (
             <button
-              type="button"
               className="header-link header-link--button"
               onClick={logout}
+              type="button"
             >
               Выйти
             </button>
           )}
-        </div>
+        </nav>
       </div>
     </header>
   );
