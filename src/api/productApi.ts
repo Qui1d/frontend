@@ -87,7 +87,7 @@ export async function getProductBySlug(slug: string): Promise<Product> {
 export async function createProduct(
   product: ProductCreateRequest
 ): Promise<Product> {
-  const createdProduct = await apiRequest<ProductFromApi>('/Product', {
+  const createdProduct = await apiRequest<ProductFromApi>('/Product/create', {
     method: 'POST',
     body: product,
   });
