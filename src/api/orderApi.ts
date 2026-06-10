@@ -9,6 +9,8 @@ interface OrderItemFromApi {
   productName: string;
   quantity: number;
   unitPrice: number;
+  gameKey?: string | null;
+  GameKey?: string | null;
 }
 
 interface OrderFromApi {
@@ -27,6 +29,7 @@ export interface OrderItem {
   productName: string;
   quantity: number;
   unitPrice: number;
+  gameKey: string;
 }
 
 export interface Order {
@@ -68,6 +71,7 @@ function mapOrderFromApi(order: OrderFromApi): Order {
       productName: item.productName,
       quantity: item.quantity,
       unitPrice: Number(item.unitPrice),
+      gameKey: item.gameKey || item.GameKey || '',
     })),
   };
 }

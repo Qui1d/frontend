@@ -1,24 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+
 import { getMyOrders } from '../api/orderApi';
-import type { Order } from '../api/orderApi';
 import { useAuth } from '../hooks/useAuth';
 
-function formatStatus(status: Order['status']) {
-  switch (status) {
-    case 'Paid':
-      return 'Оплачен';
-    case 'Completed':
-      return 'Завершён';
-    case 'Cancelled':
-      return 'Отменён';
-    default:
-      return 'В ожидании';
-  }
-}
+import type { Order } from '../api/orderApi';
 
 const PurchasesPage = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,114 +16,128 @@ const PurchasesPage = () => {
   useEffect(() => {
     const loadOrders = async () => {
       if (!isAuthenticated) {
+        setOrders([]);
         setIsLoading(false);
         return;
       }
 
       try {
+        setIsLoading(true);
+        setError('');
+        setOrders([]);
+
         const loadedOrders = await getMyOrders();
+
         setOrders(loadedOrders);
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Не удалось загрузить покупки'
-        );
+      } catch (error) {
+        setOrders([]);
+
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError('Не удалось загрузить покупки');
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     loadOrders();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.id]);
+
+  const purchasedItems = useMemo(() => {
+    return orders.flatMap((order) =>
+      order.items.map((item) => ({
+        ...item,
+        orderId: order.id,
+        createdAt: order.createdAt,
+      }))
+    );
+  }, [orders]);
 
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }
 
-  if (isLoading) {
-    return (
-      <div className="page-stack">
-        <section className="page-section">
+  return (
+    <div className="page-stack">
+      <section className="banner banner--small">
+        <div>
+          <p className="banner__eyebrow">LIBRARY</p>
           <h1>Мои покупки</h1>
-          <p>Загрузка покупок...</p>
-        </section>
-      </div>
-    );
-  }
+          <p>
+            Здесь отображаются только покупки текущего аккаунта и его личные
+            ключи активации.
+          </p>
+        </div>
+      </section>
 
-  if (error) {
-    return (
-      <div className="page-stack">
-        <section className="page-section">
-          <h1>Мои покупки</h1>
-          <p className="form-error">{error}</p>
-        </section>
-      </div>
-    );
-  }
+      <section className="page-section">
+        <div className="section-header">
+          <h2>Купленные игры</h2>
+        </div>
 
-  if (orders.length === 0) {
-    return (
-      <div className="page-stack">
-        <section className="page-section">
+        {isLoading && (
           <div className="empty-state">
-            <h1>Мои покупки</h1>
-            <p>У тебя пока нет оформленных заказов.</p>
-            <Link className="button button--primary" to="/catalog">
+            Загрузка покупок...
+          </div>
+        )}
+
+        {!isLoading && error && (
+          <div className="empty-state">
+            {error}
+          </div>
+        )}
+
+        {!isLoading && !error && purchasedItems.length === 0 && (
+          <div className="empty-state">
+            <p>На этом аккаунте пока нет покупок.</p>
+
+            <Link to="/catalog" className="primary-btn">
               Перейти в каталог
             </Link>
           </div>
-        </section>
-      </div>
-    );
-  }
+        )}
 
-  return (
-    <div className="page-stack">
-      <section className="page-section">
-        <div className="section-header">
-          <h1>Мои покупки</h1>
-          <p>История оформленных заказов и приобретённых игровых ключей.</p>
-        </div>
+        {!isLoading && !error && purchasedItems.length > 0 && (
+          <div className="purchases-list">
+            {purchasedItems.map((item) => (
+              <article className="purchase-card" key={item.id}>
+                <div className="purchase-card__main">
+                  <h3>{item.productName}</h3>
 
-        <div className="orders-list">
-          {orders.map((order) => (
-            <article className="order-card" key={order.id}>
-              <div className="order-card__header">
-                <div>
-                  <h2>Заказ #{order.id}</h2>
                   <p>
-                    {new Date(order.createdAt).toLocaleString('ru-RU')}
+                    Заказ #{item.orderId} ·{' '}
+                    {new Date(item.createdAt).toLocaleDateString('ru-RU')}
                   </p>
+
+                  <p>Цена: ${item.unitPrice}</p>
                 </div>
 
-                <div className="order-card__meta">
-                  <span>{formatStatus(order.status)}</span>
-                  <strong>${order.totalAmount.toFixed(2)}</strong>
+                <div className="purchase-card__key">
+                  <span>Личный ключ активации</span>
+
+                  <strong>
+                    {item.gameKey || 'Ключ не был сгенерирован'}
+                  </strong>
                 </div>
-              </div>
 
-              <div className="order-card__items">
-                {order.items.map((item) => (
-                  <div className="order-card__item" key={item.id}>
-                    <div>
-                      <strong>{item.productName}</strong>
-                      <p>
-                        Количество: {item.quantity} × $
-                        {item.unitPrice.toFixed(2)}
-                      </p>
-                    </div>
-
-                    <span>
-                      ${(item.quantity * item.unitPrice).toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
+                <button
+                  className="primary-btn purchase-card__button"
+                  type="button"
+                  disabled={!item.gameKey}
+                  onClick={() => {
+                    alert(
+                      `Инструкция по использованию:\n\n1. Открой Steam / Epic Games / платформу игры.\n2. Найди раздел активации ключа.\n3. Введи ключ: ${item.gameKey}\n4. Подтверди активацию.`
+                    );
+                  }}
+                >
+                  Инструкция по использованию
+                </button>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
